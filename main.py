@@ -34,9 +34,7 @@ def custom_pipeline(model_name, data):
 
         lev_distance = distance(output_summary, datum.title)
         distances.append(lev_distance)
-        print(output_summary)
-        print(datum.title, lev_distance)
-        exit()
+
     return output_summaries, distances
 
 
@@ -46,12 +44,23 @@ def default_pipeline(data):
     return summarized_text
 
 
+def fine_tune(model, data):
+    # TODO: implement model fine-tuning
+    pass
+
+
+def calculate_rouge(actual, predicted):
+    # TODO: implement
+    pass
+
+
 if __name__ == "__main__":
     huggingface_model_names = [
         "t5-base",
         "microsoft/prophetnet-large-uncased",
         "facebook/bart-base",
     ]
-    data = data_operations.read_data()
+    data = data_operations.read_data("data/crypto_news_parsed_2018_validation.csv")
     for model_name in huggingface_model_names:
         summaries, distances = custom_pipeline(model_name, data)
+        print(model_name, sum(distances) / len(distances))

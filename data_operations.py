@@ -16,6 +16,11 @@ def read_data(path="data/crypto_news_parsed_2013-2017_train.csv") -> List[Crypto
     return data
 
 
+def text_preprocessing(texts: List[str]) -> List[str]:
+    # TODO: try lowercase
+    return [text.strip().replace("\r", "").replace("\n", "") for text in texts]
+
+
 if __name__ == "__main__":
     data = read_data()
     # print(len(data))
