@@ -1,24 +1,22 @@
+from typing import List
+
+import tokenizers
 from Levenshtein import distance
 from transformers import pipeline, AutoModelForSeq2SeqLM, AutoTokenizer
 import data_operations
+from crypto_news_dataset import CryptoNewsDataset
 
 
-def custom_pipeline(model_name, data):
+def custom_pipeline(model_name: str, data: CryptoNewsDataset):
     # Initialize the HuggingFace summarization pipeline
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    # T5 uses a max_length of 512 so we cut the article to 512 tokens.
-    # inputs = tokenizer.encode(
-    #     "summarize: " + ARTICLE, return_tensors="pt", max_length=512, truncation=True
-    # )
     output_summaries = []
     distances = []
-    for datum in data:
-        txt = "summarize:" + datum.text
-        inputs = tokenizer.encode(txt, return_tensors="pt", max_length=3000, truncation=True)
+    for i in range(len(data.encodings)):
         outputs = model.generate(
-            inputs,
+            data.encodings[i],
             max_length=150,
             min_length=40,
             no_repeat_ngram_size=2,
@@ -26,16 +24,20 @@ def custom_pipeline(model_name, data):
             early_stopping=True,
         )
         output_summary = tokenizer.decode(outputs[0])
-        output_summary = output_summary.replace("<pad>", "")
-        output_summary = output_summary.replace("<unk>", "")
-        output_summary = output_summary.replace("</s>", "")
-        output_summary = output_summary.strip()
+        output_summary = process_output(output_summary)
         output_summaries.append(output_summary)
-
-        lev_distance = distance(output_summary, datum.title)
+        lev_distance = distance(output_summary, data.labels[i])
         distances.append(lev_distance)
 
     return output_summaries, distances
+
+
+def process_output(output_summary):
+    output_summary = output_summary.replace("<pad>", "")
+    output_summary = output_summary.replace("<unk>", "")
+    output_summary = output_summary.replace("</s>", "")
+    output_summary = output_summary.strip()
+    return output_summary
 
 
 def default_pipeline(data):
@@ -60,7 +62,9 @@ if __name__ == "__main__":
         "microsoft/prophetnet-large-uncased",
         "facebook/bart-base",
     ]
-    data = data_operations.read_data("data/crypto_news_parsed_2018_validation.csv")
+    tst_data = data_operations.read_data("data/crypto_news_parsed_2018_validation.csv")
     for model_name in huggingface_model_names:
-        summaries, distances = custom_pipeline(model_name, data)
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        prepared_data = data_operations.prepare_data(tst_data, tokenizer)
+        summaries, distances = custom_pipeline(model_name, prepared_data)
         print(model_name, sum(distances) / len(distances))
