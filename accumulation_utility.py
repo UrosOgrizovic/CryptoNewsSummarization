@@ -26,7 +26,7 @@ class AccumulationUtility:
         return dict(Counter(list_of_sources))
 
     @staticmethod
-    def get_words_in_titles(data: List[CryptoNews]) -> Dict[str, int]:
+    def get_word_prominence(data: List[CryptoNews]) -> Dict[str, int]:
         split_titles = [news.title.split() for news in data]
         filtered_titles = []
         for title in split_titles:
@@ -37,5 +37,5 @@ class AccumulationUtility:
         return dict(Counter(filtered_titles))
 
     @staticmethod
-    def get_num_words_in_texts(data: List[CryptoNews]) -> Dict[str, int]:
+    def get_text_lengths(data: List[CryptoNews]) -> Dict[str, int]:
         return {str(i): len(datum.text.split()) for i, datum in enumerate(data)}

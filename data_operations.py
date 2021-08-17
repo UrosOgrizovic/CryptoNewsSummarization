@@ -3,10 +3,14 @@ import csv
 from typing import List, Dict
 
 import tokenizers
+import torch
 
 from crypto_news import CryptoNews
 from crypto_news_dataset import CryptoNewsDataset
 from plotting_utility import PlottingUtility
+
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
 
 
 def read_data(path="data/crypto_news_parsed_2013-2017_train.csv") -> List[CryptoNews]:
@@ -19,13 +23,22 @@ def read_data(path="data/crypto_news_parsed_2013-2017_train.csv") -> List[Crypto
     return data
 
 
-def prepare_data(data: List[CryptoNews], tokenizer) -> CryptoNewsDataset:
-    encodings_labels = {}
+def prepare_data(data: List[CryptoNews], tokenizer, max_len: int) -> CryptoNewsDataset:
+    samples = []
     for datum in data:
         txt = "summarize:" + datum.text
-        encoding = tokenizer.encode(txt, return_tensors="pt", max_length=3000, truncation=True)
-        encodings_labels[encoding] = datum.title
-    return CryptoNewsDataset(list(encodings_labels.keys()), list(encodings_labels.values()))
+        news_encoding = (
+            tokenizer(txt, return_tensors="pt", max_length=max_len, truncation=True)
+            .input_ids[0]
+            .to(device)
+        )
+        title_encoding = (
+            tokenizer(datum.title, return_tensors="pt", max_length=max_len, truncation=True)
+            .input_ids[0]
+            .to(device)
+        )
+        samples.append({"input_ids": news_encoding, "label_ids": title_encoding})
+    return CryptoNewsDataset(samples)
 
 
 def text_preprocessing(texts: List[str]) -> List[str]:

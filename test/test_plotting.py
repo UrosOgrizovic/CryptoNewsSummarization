@@ -34,13 +34,13 @@ class TestPlotting(unittest.TestCase):
                 "word",
                 "# times used",
                 "word_prominence.png",
-                AccumulationUtility.get_words_in_titles,
+                AccumulationUtility.get_word_prominence,
             ),
             PlotParam(
                 "id",
                 "text length in words",
                 "text_lengths.png",
-                AccumulationUtility.get_num_words_in_texts,
+                AccumulationUtility.get_text_lengths,
             ),
         ]
 

@@ -19,6 +19,7 @@ class TestAccumulationFunctions(unittest.TestCase):
             method_to_call = getattr(AccumulationUtility, method)
             dictionary = method_to_call(self.data)
             self.assertEqual(len(self.data), sum(dictionary.values()))
+        self.assertEqual(len(self.data), len(AccumulationUtility.get_text_lengths(self.data)))
 
 
 if __name__ == "__main__":

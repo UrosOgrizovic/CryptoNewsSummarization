@@ -1,15 +1,17 @@
+from typing import Dict, List
+
 import torch.utils.data
 
 
 class CryptoNewsDataset(torch.utils.data.Dataset):
-    def __init__(self, encodings, labels):
-        self.encodings = encodings
-        self.labels = labels
+    def __init__(self, samples: List[Dict[str, torch.Tensor]]):
+        self.samples = samples
 
-    def __getitem__(self, idx):
-        item = {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
-        item["labels"] = torch.tensor(self.labels[idx])
-        return item
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self.samples[key]
+        else:
+            raise TypeError("CryptoNewsDataset.__getitem__() doesn't support slicing")
 
     def __len__(self):
-        return len(self.labels)
+        return len(self.samples)
