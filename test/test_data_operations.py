@@ -21,5 +21,6 @@ class TestDataOperations(unittest.TestCase):
     def test_prepare_data(self):
         tst_data = data_operations.read_data(self.tst_data_path)
         tokenizer = AutoTokenizer.from_pretrained("t5-base")
-        prepared_tst_data = data_operations.prepare_data(tst_data, tokenizer)
+        max_len = 1000
+        prepared_tst_data = data_operations.prepare_data(tst_data, tokenizer, max_len)
         self.assertIsInstance(prepared_tst_data, CryptoNewsDataset)
