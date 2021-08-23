@@ -94,11 +94,6 @@ def build_compute_metrics_fn(
             metric_to_ret = calculate_rouge(pred_lns, label_lns)
         elif metric_name == "bleu":
             metric_to_ret = calculate_bleu(pred_lns, label_lns)
-        elif metric_name == "levenshtein distance":
-            lev_dists = []
-            for i in range(len(pred_lns)):
-                lev_dists.append(lev_distance(pred_lns[i], label_lns[i]))
-            metric_to_ret = {"levenshtein distance": lev_dists}
         summ_len = np.round(np.mean(lmap(non_pad_len, pred.predictions)), 1)
         metric_to_ret.update({"gen_len": summ_len})
         return metric_to_ret

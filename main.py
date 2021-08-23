@@ -71,10 +71,6 @@ def get_predictions(
             metric_val = calculate_rouge([output_summary], [decoded_label])
         elif metric_name == "bleu":
             metric_val = calculate_bleu(output_summary, decoded_label)
-        elif metric_name == "levenshtein distance":
-            metric_val = distance(output_summary, decoded_label)
-        print(metric_val)
-        exit()
         metric_values.append(metric_val)
 
     return output_summaries, metric_values
@@ -144,7 +140,7 @@ if __name__ == "__main__":
     metrics_to_write = {}
     max_summarization_len = 1000
     do_fine_tuning = False
-    metric_name = ["rouge", "bleu", "levenshtein distance"][1]
+    metric_name = ["rouge", "bleu"][0]
     for model_name in huggingface_model_names:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
