@@ -85,7 +85,11 @@ def process_output(output_summary):
 
 
 def fine_tune(
-    tokenizer, model: AutoModelForSeq2SeqLM, max_summarization_len: int, metric_name: str
+    tokenizer,
+    model: AutoModelForSeq2SeqLM,
+    max_summarization_len: int,
+    metric_name: str,
+    model_name: str,
 ):
     print("Preparing tr data...")
     start = time.time()
@@ -95,7 +99,7 @@ def fine_tune(
     model.to(device)
     batch_size = 1
     training_args = TrainingArguments(
-        "trainer_output_dir",
+        f"{model_name}/trainer_output_dir",
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
         dataloader_pin_memory=False,
@@ -132,7 +136,7 @@ if __name__ == "__main__":
         "microsoft/prophetnet-large-uncased",
         "facebook/bart-base",
     ]
-    num_tr_samples, num_tst_samples = 10000, 10000
+    num_tr_samples, num_tst_samples = 100, 100
     tr_path = "data/crypto_news_parsed_2018_validation.csv"
     tst_path = "data/crypto_news_parsed_2013-2017_train.csv"
     tr_data = data_operations.read_data(tr_path)[:num_tr_samples]
@@ -146,7 +150,7 @@ if __name__ == "__main__":
         model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
         if do_fine_tuning:
             print(f"Fine-tuning model {model_name}")
-            fine_tune(tokenizer, model, max_summarization_len, metric_name)
+            fine_tune(tokenizer, model, max_summarization_len, metric_name, model_name)
             print("Preparing tst data...")
         start = time.time()
         prepared_tst_data = data_operations.prepare_data(tst_data, tokenizer, max_summarization_len)
