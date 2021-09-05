@@ -14,7 +14,6 @@ ROUGE_KEYS = ["rouge1"]
 
 def calculate_bleu(pred_lns: List[str], tgt_lns: List[str], **kwargs) -> dict:
     """Uses sacrebleu's corpus_bleu implementation."""
-    # return {"bleu": round(corpus_bleu(output_lns, [refs_lns], **kwargs).score, 4)}
     return {"bleu": round(corpus_bleu(pred_lns, [tgt_lns], **kwargs).score, 4)}
 
 
@@ -74,33 +73,33 @@ def extract_rouge_mid_statistics(dct):
     return new_dict
 
 
-def build_compute_metrics_fn(
-    tokenizer: PreTrainedTokenizer, metric_name: str
-) -> Callable[[EvalPrediction], Dict]:
-    def non_pad_len(tokens: np.ndarray) -> int:
-        return np.count_nonzero(tokens != tokenizer.pad_token_id)
+# def build_compute_metrics_fn(
+#     tokenizer: PreTrainedTokenizer, metric_name: str
+# ) -> Callable[[EvalPrediction], Dict]:
+#     def non_pad_len(tokens: np.ndarray) -> int:
+#         return np.count_nonzero(tokens != tokenizer.pad_token_id)
+#
+#     def decode_pred(pred: EvalPrediction) -> Tuple[List[str], List[str]]:
+#         pred_str = tokenizer.batch_decode(pred.predictions, skip_special_tokens=True)
+#         label_str = tokenizer.batch_decode(pred.label_ids, skip_special_tokens=True)
+#         pred_str = lmap(str.strip, pred_str)
+#         label_str = lmap(str.strip, label_str)
+#         return pred_str, label_str
+#
+#     def summarization_metrics(pred: EvalPrediction) -> Dict:
+#         pred_lns, label_lns = decode_pred(pred)
+#         metric_to_ret = {}
+#         if metric_name == "rouge":
+#             metric_to_ret = calculate_rouge(pred_lns, label_lns)
+#         elif metric_name == "bleu":
+#             metric_to_ret = calculate_bleu(pred_lns, label_lns)
+#         summ_len = np.round(np.mean(lmap(non_pad_len, pred.predictions)), 1)
+#         metric_to_ret.update({"gen_len": summ_len})
+#         return metric_to_ret
+#
+#     return summarization_metrics
 
-    def decode_pred(pred: EvalPrediction) -> Tuple[List[str], List[str]]:
-        pred_str = tokenizer.batch_decode(pred.predictions, skip_special_tokens=True)
-        label_str = tokenizer.batch_decode(pred.label_ids, skip_special_tokens=True)
-        pred_str = lmap(str.strip, pred_str)
-        label_str = lmap(str.strip, label_str)
-        return pred_str, label_str
 
-    def summarization_metrics(pred: EvalPrediction) -> Dict:
-        pred_lns, label_lns = decode_pred(pred)
-        metric_to_ret = {}
-        if metric_name == "rouge":
-            metric_to_ret = calculate_rouge(pred_lns, label_lns)
-        elif metric_name == "bleu":
-            metric_to_ret = calculate_bleu(pred_lns, label_lns)
-        summ_len = np.round(np.mean(lmap(non_pad_len, pred.predictions)), 1)
-        metric_to_ret.update({"gen_len": summ_len})
-        return metric_to_ret
-
-    return summarization_metrics
-
-
-def lmap(f: Callable, x: Iterable) -> List:
-    """list(map(f, x))"""
-    return list(map(f, x))
+# def lmap(f: Callable, x: Iterable) -> List:
+#     """list(map(f, x))"""
+#     return list(map(f, x))

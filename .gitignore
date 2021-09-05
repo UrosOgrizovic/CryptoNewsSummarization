@@ -130,4 +130,4 @@ dmypy.json
 
 .idea/
 data/
-trainer_output_dir/
+trainer_output_dir*/

@@ -1,17 +1,12 @@
 import time
-from typing import List, Dict
+from typing import Dict
 
-import tokenizers
-from Levenshtein import distance as lev_distance
 from tqdm import tqdm
 from transformers import (
-    pipeline,
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
     TrainingArguments,
     Trainer,
-    IntervalStrategy,
-    Seq2SeqTrainer,
 )
 import data_operations
 from crypto_news_dataset import CryptoNewsDataset
@@ -20,7 +15,7 @@ import os
 
 import gc
 
-from metrics import build_compute_metrics_fn, calculate_rouge, calculate_bleu
+from metrics import calculate_rouge, calculate_bleu
 
 gc.collect()
 
@@ -54,6 +49,7 @@ def get_predictions(
     output_summaries = []
     metric_values = []
     for i in tqdm(range(len(data))):
+        # print(i, data[i])
         outputs = model.generate(
             data[i]["input_ids"].to(device),
             max_length=max_summarization_len,
@@ -71,7 +67,7 @@ def get_predictions(
             metric_val = calculate_rouge([output_summary], [decoded_label])
         elif metric_name == "bleu":
             metric_val = calculate_bleu(output_summary, decoded_label)
-        metric_values.append(metric_val)
+        metric_values.append(list(metric_val.values())[0])
 
     return output_summaries, metric_values
 
@@ -85,32 +81,38 @@ def process_output(output_summary):
 
 
 def fine_tune(
+    tr_data,
     tokenizer,
     model: AutoModelForSeq2SeqLM,
     max_summarization_len: int,
     metric_name: str,
     model_name: str,
 ):
+    batch_size = 64
     print("Preparing tr data...")
     start = time.time()
-    prepared_tr_data = data_operations.prepare_data(tr_data, tokenizer, max_summarization_len)
+    tr_data = data_operations.prepare_data(tr_data, tokenizer, max_summarization_len)
     end = time.time()
     print(f"Finished tr data preparation in {round(end - start, 2)}s")
     model.to(device)
-    batch_size = 1
+    output_dir_name = f"trainer_output_dir_{model_name[:6]}"
+    print(f"output dir name {output_dir_name}")
+    if not os.path.exists(output_dir_name):
+        os.makedirs(output_dir_name)
     training_args = TrainingArguments(
-        f"{model_name}/trainer_output_dir",
+        output_dir=output_dir_name,
+        overwrite_output_dir=True,
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
         dataloader_pin_memory=False,
         save_total_limit=1,
+        save_steps=50,
     )
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=prepared_tr_data,
+        train_dataset=tr_data,
     )
-    trainer.compute_metrics = build_compute_metrics_fn(tokenizer, metric_name)
     trainer.train()
 
 
@@ -133,24 +135,28 @@ def write_results_to_file(
 if __name__ == "__main__":
     huggingface_model_names = [
         "t5-base",
-        "microsoft/prophetnet-large-uncased",
         "facebook/bart-base",
     ]
-    num_tr_samples, num_tst_samples = 100, 100
+    model_paths = [
+        "trainer_output_dir_t5-bas/checkpoint-450/",
+        "trainer_output_dir_facebo/checkpoint-450",
+    ]
+    num_tr_samples, num_tst_samples = 10000, 100
     tr_path = "data/crypto_news_parsed_2018_validation.csv"
     tst_path = "data/crypto_news_parsed_2013-2017_train.csv"
     tr_data = data_operations.read_data(tr_path)[:num_tr_samples]
     tst_data = data_operations.read_data(tst_path)[:num_tst_samples]
     metrics_to_write = {}
-    max_summarization_len = 1000
+    max_summarization_len = 256
     do_fine_tuning = False
     metric_name = ["rouge", "bleu"][0]
-    for model_name in huggingface_model_names:
+    for i, model_name in enumerate(huggingface_model_names):
         tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        # model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        model = AutoModelForSeq2SeqLM.from_pretrained(model_paths[i], local_files_only=True)
         if do_fine_tuning:
             print(f"Fine-tuning model {model_name}")
-            fine_tune(tokenizer, model, max_summarization_len, metric_name, model_name)
+            fine_tune(tr_data, tokenizer, model, max_summarization_len, metric_name, model_name)
             print("Preparing tst data...")
         start = time.time()
         prepared_tst_data = data_operations.prepare_data(tst_data, tokenizer, max_summarization_len)
@@ -161,6 +167,6 @@ if __name__ == "__main__":
             prepared_tst_data, tokenizer, model, max_summarization_len, metric_name
         )
         avg_metric_value = sum(metric_values) / len(metric_values)
-        print(model_name, avg_metric_value)
+        print(f"performance on tst data: {model_name}, {metric_name}: {avg_metric_value}")
         metrics_to_write[model_name] = avg_metric_value
     write_results_to_file(metric_name, metrics_to_write, num_tr_samples, do_fine_tuning)
