@@ -37,8 +37,9 @@ def prepare_data(data: List[CryptoNews], tokenizer, max_len: int) -> CryptoNewsD
             .input_ids[0]
             .to(device)
         )
-        news_encoding = torch.nn.ConstantPad1d((0, 128 - news_encoding.size()[0]), 0)(news_encoding)
-        title_encoding = torch.nn.ConstantPad1d((0, 128 - title_encoding.size()[0]), 0)(
+        news_encoding = torch.nn.ConstantPad1d((0, max_len - news_encoding.size()[0]),
+                                               0)(news_encoding)
+        title_encoding = torch.nn.ConstantPad1d((0, max_len - title_encoding.size()[0]), 0)(
             title_encoding
         )
         samples.append({"input_ids": news_encoding, "label_ids": title_encoding})

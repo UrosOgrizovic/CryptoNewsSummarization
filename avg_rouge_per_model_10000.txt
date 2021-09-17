@@ -1,2 +1,2 @@
-t5-base: 5.257664000000001
-facebook/bart-base: 6.465379999999997
+t5-base: 3.074431
+facebook/bart-base: 2.881255999999998

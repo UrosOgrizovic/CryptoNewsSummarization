@@ -12,22 +12,15 @@ import data_operations
 from crypto_news_dataset import CryptoNewsDataset
 import torch
 import os
-
-import gc
-
 from metrics import calculate_rouge, calculate_bleu
 
-gc.collect()
-
-torch.cuda.empty_cache()
-device = torch.device("cpu")
-
-os.environ["CUDA_VISIBLE_DEVICES"] = "2, 3"
+# device = torch.device("cpu")
+# os.environ["CUDA_VISIBLE_DEVICES"] = "2, 3"
 
 
-# if torch.cuda.is_available():
-#     device = torch.device("cuda")
-#     torch.cuda.empty_cache()
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+    torch.cuda.empty_cache()
 
 
 def get_predictions(
@@ -48,8 +41,8 @@ def get_predictions(
 
     output_summaries = []
     metric_values = []
+    misclassified = []
     for i in tqdm(range(len(data))):
-        # print(i, data[i])
         outputs = model.generate(
             data[i]["input_ids"].to(device),
             max_length=max_summarization_len,
@@ -59,7 +52,7 @@ def get_predictions(
             early_stopping=True,
         )
         output_summary = tokenizer.decode(outputs[0])
-        output_summary = process_output(output_summary)
+        output_summary = process_text(output_summary)
         output_summaries.append(output_summary)
         decoded_label = tokenizer.decode(data[i]["label_ids"][0])
         metric_val = -1
@@ -67,17 +60,32 @@ def get_predictions(
             metric_val = calculate_rouge([output_summary], [decoded_label])
         elif metric_name == "bleu":
             metric_val = calculate_bleu(output_summary, decoded_label)
-        metric_values.append(list(metric_val.values())[0])
-
+        metric_val = list(metric_val.values())[0]
+        if metric_val < 2:
+            decoded_input = tokenizer.decode(data[i]["input_ids"][0])
+            decoded_input = process_text(decoded_input)
+            # TODO: UnicodeEncodeError: 'charmap' codec can't encode characters in position 12207-12208: character maps to <undefined>
+            # print(decoded_input)
+            misclassified.append(f"{decoded_input}, summary={output_summary}, {metric_name}"
+                                 f"={metric_val}")
+            # misclassified.append(f"{output_summary}, {metric_val}")
+        metric_values.append(metric_val)
+    print('num misclassified = ', len(misclassified))
+    s = '\n'.join(misclassified)
+    # s = bytes(s, 'utf-8').decode('utf-8', 'ignore')
+    # print(s)
+    with open("misclassified.txt", "w", encoding="utf-8") as f:
+        f.write(s)
     return output_summaries, metric_values
 
 
-def process_output(output_summary):
-    output_summary = output_summary.replace("<pad>", "")
-    output_summary = output_summary.replace("<unk>", "")
-    output_summary = output_summary.replace("</s>", "")
-    output_summary = output_summary.strip()
-    return output_summary
+def process_text(text):
+    text = text.replace("<pad>", "")
+    text = text.replace("<unk>", "")
+    text = text.replace("</s>", "")
+    text = text.replace("<s>", "")
+    text = text.strip()
+    return text
 
 
 def fine_tune(
@@ -154,6 +162,7 @@ if __name__ == "__main__":
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         # model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
         model = AutoModelForSeq2SeqLM.from_pretrained(model_paths[i], local_files_only=True)
+        model.to(device)
         if do_fine_tuning:
             print(f"Fine-tuning model {model_name}")
             fine_tune(tr_data, tokenizer, model, max_summarization_len, metric_name, model_name)
