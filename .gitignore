@@ -131,3 +131,4 @@ dmypy.json
 .idea/
 data/
 trainer_output_dir*/
+avg_*.txt

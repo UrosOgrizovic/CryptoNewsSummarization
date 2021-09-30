@@ -1,3 +1,0 @@
-t5-base: 58.7
-microsoft/prophetnet-large-uncased: 46.9
-facebook/bart-base: 54.6

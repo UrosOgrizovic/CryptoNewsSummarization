@@ -1,2 +1,0 @@
-t5-base: 3.074431
-facebook/bart-base: 2.881255999999998

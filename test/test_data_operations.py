@@ -15,12 +15,17 @@ class TestDataOperations(unittest.TestCase):
         self.tst_data_path = "../data/crypto_news_parsed_2018_validation.csv"
 
     def test_read_tr_data(self):
-        tst_data = data_operations.read_data(self.tst_data_path)
-        self.assertIsInstance(tst_data[0], CryptoNews)
+        tr_data = data_operations.read_data(self.tr_data_path, num_rows=10)
+        self.assertIsInstance(tr_data[0], CryptoNews)
 
     def test_prepare_data(self):
-        tst_data = data_operations.read_data(self.tst_data_path)
+        tst_data = data_operations.read_data(self.tst_data_path, num_rows=10)
         tokenizer = AutoTokenizer.from_pretrained("t5-base")
         max_len = 10
         prepared_tst_data = data_operations.prepare_data(tst_data, tokenizer, max_len)
         self.assertIsInstance(prepared_tst_data, CryptoNewsDataset)
+
+    def test_text_preprocessing(self):
+        txt = "  <s>Bitcoin Price Update: Will China Lead us Down?</s>\r\n  "
+        expected = "Bitcoin Price Update: Will China Lead us Down?"
+        self.assertEqual(expected, data_operations.text_preprocessing(txt))

@@ -2,6 +2,7 @@ import unittest
 
 import data_operations
 from accumulation_utility import AccumulationUtility
+from crypto_news import CryptoNews
 
 TR_DATA_PATH = "../data/crypto_news_parsed_2013-2017_train.csv"
 
@@ -20,6 +21,14 @@ class TestAccumulationFunctions(unittest.TestCase):
             dictionary = method_to_call(self.data)
             self.assertEqual(len(self.data), sum(dictionary.values()))
         self.assertEqual(len(self.data), len(AccumulationUtility.get_text_lengths(self.data)))
+
+    def test_get_attr_word_prominence(self):
+        data = [
+            CryptoNews(title="first text"),
+            CryptoNews(title="second text"),
+        ]
+        res = AccumulationUtility.get_word_prominence(data, "title")
+        assert {"first": 1, "text": 2, "second": 1} == res
 
 
 if __name__ == "__main__":

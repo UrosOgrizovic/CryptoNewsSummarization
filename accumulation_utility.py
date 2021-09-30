@@ -26,15 +26,15 @@ class AccumulationUtility:
         return dict(Counter(list_of_sources))
 
     @staticmethod
-    def get_word_prominence(data: List[CryptoNews]) -> Dict[str, int]:
-        split_titles = [news.title.split() for news in data]
-        filtered_titles = []
-        for title in split_titles:
-            for word in title:
+    def get_word_prominence(data: List[CryptoNews], attr_name: str) -> Dict[str, int]:
+        split_texts = [getattr(news, attr_name).split() for news in data]
+        filtered_texts = []
+        for text in split_texts:
+            for word in text:
                 word = word.strip()
                 if len(word) >= 3 and word.lower() not in constants.STOP_WORDS:
-                    filtered_titles.append(word)
-        return dict(Counter(filtered_titles))
+                    filtered_texts.append(word)
+        return dict(Counter(filtered_texts))
 
     @staticmethod
     def get_text_lengths(data: List[CryptoNews]) -> Dict[str, int]:

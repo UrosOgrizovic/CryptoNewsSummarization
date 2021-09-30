@@ -14,13 +14,13 @@ class CryptoNews:
         author="",
         source="",
     ):
-        self.url = row[0] or url
-        self.title = row[1] or title
-        self.text = row[2] or text
-        self.html = row[3] or html
-        self.year = int(row[4]) or year
-        self.author = row[5] or author
-        self.source = row[6] or source
+        self.url = url
+        self.title = title
+        self.text = text
+        self.html = html
+        self.year = year
+        self.author = author
+        self.source = source
 
     def __str__(self):
         return f"{self.url}, {self.title}, {self.year}, {self.author}, {self.source}"
