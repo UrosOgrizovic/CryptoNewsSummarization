@@ -39,5 +39,7 @@ class TestMetrics(unittest.TestCase):
     def test_calculate_bleu(self):
         """sentences must be at least 4 words long because of MAX_NGRAM_ORDER in
         sacrebleu/metrics/bleu.py. Otherwise, the result is 0"""
-        result = metrics.calculate_bleu(["first string a a a"], ["second string b b b"])
-        assert {"bleu": 10.6822} == result
+        pred = "first string a a a"
+        ref = ["second string b b b"]
+        result = metrics.calculate_bleu(pred, ref)
+        assert {"bleu": round(10.6822/100, 4)} == result

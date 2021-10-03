@@ -55,6 +55,7 @@ def get_predictions(
         output_summary = process_text(output_summary)
         output_summaries.append(output_summary)
         decoded_label = tokenizer.decode(data[i]["label_ids"][0])
+        decoded_label = process_text(decoded_label)
         metric_val = -1
         misclassification_threshold = 20
         if metric_name == "rouge1":
@@ -65,8 +66,9 @@ def get_predictions(
         elif metric_name == "bleu":
             if len(output_summary.split()) < 4 or len(decoded_label.split()) < 4:
                 continue
-            metric_val = calculate_bleu([output_summary], [decoded_label])
-            misclassification_threshold = 1
+            metric_val = calculate_bleu(output_summary, [decoded_label])
+            misclassification_threshold = 0.2
+            # misclassification_threshold = 10
         metric_val = list(metric_val.values())[0]
         if metric_val < misclassification_threshold:
             decoded_input = tokenizer.decode(data[i]["input_ids"][0])
@@ -141,18 +143,18 @@ def write_results_to_file(
 
 if __name__ == "__main__":
     num_tr_samples, num_tst_samples = 10000, 2000
-    tr_path = "data/crypto_news_parsed_2018_validation.csv"
-    tst_path = "data/crypto_news_parsed_2013-2017_train.csv"
+    tr_path = "data/crypto_news_parsed_2013-2017_train.csv"
+    tst_path = "data/crypto_news_parsed_2018_validation.csv"
     tr_data = data_operations.read_data(tr_path)[:num_tr_samples]
     tst_data = data_operations.read_data(tst_path)[:num_tst_samples]
     print("len tr data", len(tr_data))
     print("len tst data", len(tst_data))
     metrics_to_write = {}
-    max_input_seq_len = 50
+    max_input_seq_len = 200
     do_fine_tuning = False
     do_evaluation = True
     huggingface_model_names = ["t5-base", "facebook/bart-base"]
-    metric_name = ["rouge1", "rouge2", "bleu"][0]
+    metric_name = ["rouge1", "rouge2", "bleu"][2]
     for model_name in huggingface_model_names:
         model_path = f"trainer_output_dir/{model_name.replace('/', '-')}/checkpoint-200"
         tokenizer = AutoTokenizer.from_pretrained(model_name)

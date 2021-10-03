@@ -5,7 +5,6 @@ class CryptoNews:
 
     def __init__(
         self,
-        row: list = None,
         url="",
         title="",
         text="",

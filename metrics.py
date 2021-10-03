@@ -1,30 +1,28 @@
 from typing import List, Dict, Tuple, Callable, Iterable
 
 import numpy as np
-from sacrebleu import corpus_bleu
+import sacrebleu
 from rouge_score import rouge_scorer, scoring
 from transformers import EvalPrediction, PreTrainedTokenizer
 
 from sentence_splitter import add_newline_to_end_of_each_sentence
-from Levenshtein import distance as lev_distance
 
 # ROUGE_KEYS = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
 ROUGE_KEYS = ["rouge1"]
 
 
-def calculate_bleu(pred_lns: List[str], tgt_lns: List[str], **kwargs) -> dict:
-    """Uses sacrebleu's corpus_bleu implementation."""
-    return {"bleu": round(corpus_bleu(pred_lns, [tgt_lns], **kwargs).score, 4)}
+def calculate_bleu(candidate: str, refs: List[str], **kwargs) -> dict:
+    return {"bleu": round(sacrebleu.compat.sentence_bleu(candidate, refs, **kwargs).score / 100, 4)}
 
 
 def calculate_rouge(
-    pred_lns: List[str],
-    tgt_lns: List[str],
-    use_stemmer=True,
-    rouge_keys=ROUGE_KEYS,
-    return_precision_and_recall=False,
-    bootstrap_aggregation=True,
-    newline_sep=True,
+        pred_lns: List[str],
+        tgt_lns: List[str],
+        use_stemmer=True,
+        rouge_keys=ROUGE_KEYS,
+        return_precision_and_recall=False,
+        bootstrap_aggregation=True,
+        newline_sep=True,
 ) -> Dict:
     """Calculate rouge using rouge_scorer package.
     Args:
@@ -70,3 +68,9 @@ def extract_rouge_mid_statistics(dct):
             stat: round(getattr(mid, stat), 4) for stat in ["precision", "recall", "fmeasure"]
         }
     return new_dict
+
+
+if __name__ == '__main__':
+    pred = "first string a a a"
+    ref = ["second string b b b"]
+    print(calculate_bleu(pred, ref))

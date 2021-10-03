@@ -27,5 +27,5 @@ class TestDataOperations(unittest.TestCase):
 
     def test_text_preprocessing(self):
         txt = "  <s>Bitcoin Price Update: Will China Lead us Down?</s>\r\n  "
-        expected = "Bitcoin Price Update: Will China Lead us Down?"
+        expected = "bitcoin price update: will china lead us down?"
         self.assertEqual(expected, data_operations.text_preprocessing(txt))
